@@ -21,158 +21,96 @@
 package jira
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
+
+	gojira "github.com/andygrunwald/go-jira"
 )
 
+/**
+ ___
+|_ _|___ ___ _   _  ___
+ | |/ __/ __| | | |/ _ \
+ | |\__ \__ \ |_| |  __/
+|___|___/___/\__,_|\___|
+
+*/
+
+const ISSUES = "/rest/api/2/issue"
+const ISSUE = "/rest/api/2/issue/{issueIdOrKey}"
+const ISSUE_ARCHIVE = "/rest/api/2/issue/archive"
+const ISSUE_BULK = "/rest/api/2/issue/bulk"
+const ISSUE_CREATEMETA = "/rest/api/2/issue/createmeta"
+const ISSUE_CREATEMETA_ISSUETYPES = "/rest/api/2/issue/createmeta/{projectIdOrKey}/issuetypes"
+const ISSUE_CREATEMETA_ISSUETYPE = "/rest/api/2/issue/createmeta/{projectIdOrKey}/issuetypes/{issueTypeId}"
+const ISSUE_UNARCHIVE = "/rest/api/2/issue/unarchive"
+const ISSUE_ASSIGNEE = "/rest/api/2/issue/{issueIdOrKey}/assignee"
+const ISSUE_CHANGELOG = "/rest/api/2/issue/{issueIdOrKey}/changelog"
+const ISSUE_CHANGELOG_LIST = "/rest/api/2/issue/{issueIdOrKey}/changelog/list"
+const ISSUE_EDIT_META = "/rest/api/2/issue/{issueIdOrKey}/editmeta"
+const ISSUE_NOTIFY = "/rest/api/2/issue/{issueIdOrKey}/notify"
+const ISSUE_TRANSITIONS = "/rest/api/2/issue/{issueIdOrKey}/transitions"
+const ISSUES_ARCHIVE_EXPORT = "/rest/api/2/issues/archive/export"
+
 type IssueService struct {
-	ctx context.Context
-	sd  *SD
+	Service
 }
 
 func (SD *SD) IssueService() *IssueService {
+	IS := Service{
+		ctx: context.Background(), sd: SD}
 
-	return &IssueService{
-		context.Background(), SD}
-}
-
-func (IS *IssueService) Create(Issue interface{}, result interface{}) error {
-	return IS.ContextCreate(IS.ctx, Issue, result)
-}
-
-func (IS *IssueService) ContextCreate(ctx context.Context, Issue interface{}, result interface{}) error {
-	u, err := IS.sd.Parse(ISSUE)
-	if err != nil {
-		return err
+	IS.Operation = map[string]ContextReq{
+		"Issue":            SD.CReq(GET, ISSUE),
+		"Create":           SD.CReq(POST, ISSUES),
+		"ArchiveByID":      SD.CReq(PUT, ISSUE_ARCHIVE),
+		"ArchiveJQL":       SD.CReq(POST, ISSUE_ARCHIVE),
+		"CreateBulk":       SD.CReq(POST, ISSUE_BULK),
+		"Meta":             SD.CReq(GET, ISSUE_CREATEMETA),
+		"ProjectMetaTypes": SD.CReq(GET, ISSUE_CREATEMETA_ISSUETYPES),
+		"ProjectMetaType":  SD.CReq(GET, ISSUE_CREATEMETA_ISSUETYPE),
+		"UnArchive":        SD.CReq(PUT, ISSUE_UNARCHIVE),
+		"Edit":             SD.CReq(PUT, ISSUE),
+		"Del":              SD.CReq(DEL, ISSUE),
+		"Assign":           SD.CReq(PUT, ISSUE_ASSIGNEE),
+		"Changelog":        SD.CReq(GET, ISSUE_CHANGELOG),
+		"ChangelogID":      SD.CReq(POST, ISSUE_CHANGELOG_LIST),
+		"EditMeta":         SD.CReq(GET, ISSUE_EDIT_META),
+		"Notification":     SD.CReq(POST, ISSUE_NOTIFY),
+		"Transitions":      SD.CReq(GET, ISSUE_TRANSITIONS),
+		"DoTransitions":    SD.CReq(POST, ISSUE_TRANSITIONS),
+		"Export":           SD.CReq(PUT, ISSUES_ARCHIVE_EXPORT),
 	}
-
-	data, err := json.Marshal(Issue)
-	if err != nil {
-		return err
-	}
-
-	buf := bytes.NewBuffer(data)
-	res, err := IS.sd.ContextRequest(ctx, POST, *u, buf)
-	if err != nil {
-		return err
-	}
-	defer CloseErrLog(res.Body)
-	return json.NewDecoder(res.Body).Decode(result)
+	return &IssueService{IS}
 }
 
-func (IS *IssueService) Issue(IssueQ string, result interface{}) error {
-	return IS.ContextIssue(IS.ctx, IssueQ, result)
+func (I *IssueService) ContextCreate(ctx context.Context, NewIssue *gojira.Issue, result interface{}) error {
+	return I.Operation["Create"](ctx, nil, NewIssue, result)
 }
 
-func (IS *IssueService) ContextIssue(ctx context.Context,
-	IssueQ string, result interface{}) error {
-	u, err := IS.sd.Parse(
-		fmt.Sprintf("%s/%s", ISSUE, IssueQ))
-	if err != nil {
-		return err
-	}
-	res, err := IS.sd.ContextRequest(ctx, GET, *u, nil)
-	if err != nil {
-		return err
-	}
-	defer CloseErrLog(res.Body)
-	return json.NewDecoder(res.Body).Decode(result)
+func (I *IssueService) Create(NewIssue *gojira.Issue, result interface{}) error {
+	return I.ContextCreate(I.ctx, NewIssue, result)
 }
 
-func (IS *IssueService) Transitions(issueIdOrKey string, result interface{}) error {
-	return IS.ContextTransitions(IS.ctx, issueIdOrKey, result)
+func (I *IssueService) ContextIssue(ctx context.Context, issueIdOrKey string, result interface{}) error {
+	return I.Operation["Issue"](ctx, Values{"issueIdOrKey": issueIdOrKey}, nil, result)
 }
 
-func (IS *IssueService) ContextTransitions(ctx context.Context,
-	issueIdOrKey string, result interface{}) error {
-
-	u, err := IS.sd.Parse(
-		Replace(ISSUE_TRANSITIONS, Values{"issueIdOrKey": issueIdOrKey}))
-	if err != nil {
-		return err
-	}
-
-	res, err := IS.sd.ContextRequest(ctx, GET, *u, nil)
-	if err != nil {
-		return err
-	}
-	defer CloseErrLog(res.Body)
-	return json.NewDecoder(res.Body).Decode(result)
+func (I *IssueService) Issue(issueIdOrKey string, result interface{}) error {
+	return I.ContextIssue(I.ctx, issueIdOrKey, result)
 }
 
-func (IS *IssueService) DoTransitions(issueIdOrKey, transitionID string, result interface{}) error {
-	return IS.ContextDoTransitions(IS.ctx, issueIdOrKey, transitionID, result)
+func (I *IssueService) ContextTransitions(ctx context.Context, issueIdOrKey string, result interface{}) error {
+	return I.Operation["Transitions"](ctx, Values{"issueIdOrKey": issueIdOrKey}, nil, result)
 }
 
-// TransitionPayloadCommentBody represents body of comment in payload
-type TransitionPayloadCommentBody struct {
-	Body string `json:"body,omitempty"`
+func (I *IssueService) Transitions(issueIdOrKey string, result interface{}) error {
+	return I.ContextTransitions(I.ctx, issueIdOrKey, result)
 }
 
-// TransitionPayloadCommentBody represents body of comment in payload
-type TransitionPayloadComment struct {
-	Add TransitionPayloadCommentBody `json:"add,omitempty" structs:"add,omitempty"`
-}
+func (I *IssueService) ContextDoTransitions(ctx context.Context, issueIdOrKey, transitionID string, result interface{}) error {
+	payload := gojira.CreateTransitionPayload{
+		Transition: gojira.TransitionPayload{
+			ID: transitionID}}
 
-// TransitionPayloadUpdate represents the updates of Transition calls like DoTransition
-type TransitionPayloadUpdate struct {
-	Comment []TransitionPayloadComment `json:"comment,omitempty" structs:"comment,omitempty"`
-}
-
-// TransitionPayload represents the request payload of Transition calls like DoTransition
-type TransitionPayload struct {
-	ID string `json:"id" structs:"id"`
-}
-
-// Resolution represents a resolution of a Jira issue.
-// Typical types are "Fixed", "Suspended", "Won't Fix", ...
-type Resolution struct {
-	Self        string `json:"self" structs:"self"`
-	ID          string `json:"id" structs:"id"`
-	Description string `json:"description" structs:"description"`
-	Name        string `json:"name" structs:"name"`
-}
-
-// TransitionPayloadFields represents the fields that can be set when executing a transition
-type TransitionPayloadFields struct {
-	Resolution *Resolution `json:"resolution,omitempty" structs:"resolution,omitempty"`
-}
-
-type CreateTransitionPayload struct {
-	Update     TransitionPayloadUpdate `json:"update,omitempty" structs:"update,omitempty"`
-	Transition TransitionPayload       `json:"transition" structs:"transition"`
-	Fields     TransitionPayloadFields `json:"fields" structs:"fields"`
-}
-
-func (IS *IssueService) ContextDoTransitions(ctx context.Context,
-	issueIdOrKey string, transitionID string, result interface{}) error {
-
-	u, err := IS.sd.Parse(
-		Replace(ISSUE_TRANSITIONS, Values{"issueIdOrKey": issueIdOrKey}))
-	if err != nil {
-		return err
-	}
-
-	payload := CreateTransitionPayload{
-		Transition: TransitionPayload{
-			ID: transitionID,
-		},
-	}
-
-	data, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
-
-	buf := bytes.NewBuffer(data)
-
-	res, err := IS.sd.ContextRequest(ctx, POST, *u, buf)
-	if err != nil {
-		return err
-	}
-	defer CloseErrLog(res.Body)
-	return json.NewDecoder(res.Body).Decode(result)
-
+	return I.Operation["Transitions"](ctx, Values{"issueIdOrKey": issueIdOrKey}, payload, result)
 }

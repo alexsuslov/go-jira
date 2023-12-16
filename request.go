@@ -21,7 +21,9 @@
 package jira
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -39,7 +41,7 @@ func CloseErrLog(closer io.Closer) {
 func (SD *SD) ContextRequest(ctx context.Context,
 	Method string, URL url.URL, body io.Reader) (*http.Response, error) {
 
-	req, err := http.NewRequestWithContext(ctx, Method, URL.String(), io.NopCloser(body))
+	req, err := http.NewRequestWithContext(ctx, Method, URL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -61,4 +63,38 @@ func (SD *SD) ContextRequest(ctx context.Context,
 	}
 
 	return res, nil
+}
+
+type ContextReq func(ctx context.Context,
+	values Values,
+	req, result interface{}) error
+
+func (SD *SD) CReq(Method, Path string) ContextReq {
+	return func(ctx context.Context, values Values,
+		req, result interface{}) error {
+		if values != nil {
+			Path = Replace(Path, values)
+		}
+		u, err := SD.Parse(Path)
+		if err != nil {
+			return err
+		}
+
+		var buf *bytes.Buffer
+		if req != nil {
+			data, err := json.Marshal(req)
+			if err != nil {
+				return err
+			}
+			buf = bytes.NewBuffer(data)
+		}
+
+		res, err := SD.ContextRequest(ctx, Method, *u, buf)
+		if err != nil {
+			return err
+		}
+
+		defer CloseErrLog(res.Body)
+		return json.NewDecoder(res.Body).Decode(result)
+	}
 }

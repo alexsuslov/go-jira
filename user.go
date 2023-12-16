@@ -22,36 +22,35 @@ package jira
 
 import (
 	"context"
-	"encoding/json"
-	"net/url"
 )
 
+/**
+ _   _
+| | | |___  ___ _ __ ___
+| | | / __|/ _ \ '__/ __|
+| |_| \__ \  __/ |  \__ \
+ \___/|___/\___|_|  |___/
+
+*/
+
+const USER_ASSIGNABLE_MULTIPROJECTSEARCH = "/rest/api/2/user/assignable/multiProjectSearch"
+const USER_ASSIGNABLE_SEARCH = "/rest/api/2/user/assignable/search"
+const USER_PERMISSION_SEARCH = "/rest/api/2/user/permission/search"
+const USER_PICKER = "/rest/api/2/user/picker"
+const USER_SEARCH = "/rest/api/2/user/search"
+const USER_SEARCH_QUERY = "/rest/api/2/user/search/query"
+const USER_SEARCH_QUERY_KEY = "/rest/api/2/user/search/query/key"
+const USER_VIEWISSUE_SEARCH = "/rest/api/2/user_/viewissue/search"
+
 type UserService struct {
-	ctx context.Context
-	sd  *SD
+	Service
 }
 
-func (SD *SD) UserService() *IssueService {
-	return &IssueService{
-		context.Background(), SD}
-}
-
-func (IS *IssueService) Search(value url.Values, result interface{}) error {
-	return IS.ContextSearch(IS.ctx, value, result)
-}
-
-func (IS *IssueService) ContextSearch(ctx context.Context, values url.Values, result interface{}) error {
-	u, err := IS.sd.Parse(USER_SEARCH)
-	if err != nil {
-		return err
+func (SD *SD) UserService() *UserService {
+	IS := Service{
+		ctx: context.Background(), sd: SD}
+	IS.Operation = map[string]ContextReq{
+		"Search": SD.CReq(POST, USER_SEARCH),
 	}
-
-	u.RawQuery = values.Encode()
-
-	res, err := IS.sd.ContextRequest(ctx, POST, *u, nil)
-	if err != nil {
-		return err
-	}
-	defer CloseErrLog(res.Body)
-	return json.NewDecoder(res.Body).Decode(result)
+	return &UserService{IS}
 }

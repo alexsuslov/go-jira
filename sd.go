@@ -21,12 +21,19 @@
 package jira
 
 import (
+	"context"
 	"net/url"
 	"os"
 	"strings"
 )
 
 type SD struct{}
+
+type Service struct {
+	ctx       context.Context
+	sd        *SD
+	Operation map[string]ContextReq
+}
 
 type Values map[string]string
 

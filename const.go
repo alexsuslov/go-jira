@@ -20,49 +20,17 @@
 
 package jira
 
+/*
+*
+
+	__  __      _   _               _
+
+|  \/  | ___| |_| |__   ___   __| |
+| |\/| |/ _ \ __| '_ \ / _ \ / _` |
+| |  | |  __/ |_| | | | (_) | (_| |
+|_|  |_|\___|\__|_| |_|\___/ \__,_|
+*/
 const GET = "GET"
 const POST = "POST"
-
-const EVENTS = "/rest/api/2/events"
-
-/**
- ___
-|_ _|___ ___ _   _  ___
- | |/ __/ __| | | |/ _ \
- | |\__ \__ \ |_| |  __/
-|___|___/___/\__,_|\___|
-
-*/
-
-const ISSUE = "/rest/api/2/issue"
-const ISSUE_ARCHIVE = "/rest/api/2/issue/archive"
-const ISSUE_BULK = "/rest/api/2/issue/bulk"
-const ISSUE_CREATEMETA = "/rest/api/2/issue/createmeta"
-const ISSUE_CREATEMETA_ISSUETYPES = "/rest/api/2/issue/createmeta/{projectIdOrKey}/issuetypes"
-const ISSUE_CREATEMETA_ISSUETYPE = "/rest/api/2/issue/createmeta/{projectIdOrKey}/issuetypes/{issueTypeId}"
-const ISSUE_UNARCHIVE = "/rest/api/2/issue/unarchive"
-const ISSUE_ASSIGNEE = "/rest/api/2/issue/{issueIdOrKey}/assignee"
-const ISSUE_CHANGELOG = "/rest/api/2/issue/{issueIdOrKey}/changelog"
-const ISSUE_CHANGELOG_LIST = "/rest/api/2/issue/{issueIdOrKey}/changelog/list"
-const ISSUE_EDIT_META = "/rest/api/2/issue/{issueIdOrKey}/editmeta"
-const ISSUE_NOTIFY = "/rest/api/2/issue/{issueIdOrKey}/notify"
-const ISSUE_TRANSITIONS = "/rest/api/2/issue/{issueIdOrKey}/transitions"
-const ISSUES_ARCHIVE_EXPORT = "/rest/api/2/issues/archive/export"
-
-/**
- _   _
-| | | |___  ___ _ __ ___
-| | | / __|/ _ \ '__/ __|
-| |_| \__ \  __/ |  \__ \
- \___/|___/\___|_|  |___/
-
-*/
-
-const USER_ASSIGNABLE_MULTIPROJECTSEARCH = "/rest/api/2/user/assignable/multiProjectSearch"
-const USER_ASSIGNABLE_SEARCH = "/rest/api/2/user/assignable/search"
-const USER_PERMISSION_SEARCH = "/rest/api/2/user/permission/search"
-const USER_PICKER = "/rest/api/2/user/picker"
-const USER_SEARCH = "/rest/api/2/user/search"
-const USER_SEARCH_QUERY = "/rest/api/2/user/search/query"
-const USER_SEARCH_QUERY_KEY = "/rest/api/2/user/search/query/key"
-const USER_VIEWISSUE_SEARCH = "/rest/api/2/user_/viewissue/search"
+const PUT = "PUT"
+const DEL = "DEL"
