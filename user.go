@@ -26,11 +26,11 @@ import (
 
 /**
  _   _
-| | | |___  ___ _ __ ___
-| | | / __|/ _ \ '__/ __|
-| |_| \__ \  __/ |  \__ \
- \___/|___/\___|_|  |___/
+| | | |___ ___ _ _
+| |_| (_-</ -_) '_|
+ \___//__/\___|_|
 
+figlet -f small user
 */
 
 const USER_ASSIGNABLE_MULTIPROJECTSEARCH = "/rest/api/2/user/assignable/multiProjectSearch"
