@@ -21,41 +21,38 @@
 package jira
 
 import (
-	"context"
-	"fmt"
-	"net/url"
-	"os"
-	"strings"
+	"testing"
+
+	gojira "github.com/andygrunwald/go-jira"
 )
 
-type SD struct{}
+func TestIssueService_Issue(t *testing.T) {
+	sd := SD{}
+	is := sd.IssueService()
 
-type Service struct {
-	ctx       context.Context
-	sd        *SD
-	Operation map[string]ContextReq
-}
-
-type Values map[string]string
-
-func Replace(src string, values Values) string {
-	for k, v := range values {
-		src = strings.ReplaceAll(src, fmt.Sprintf("{%s}", k), v)
+	type args struct {
+		issueIdOrKey string
+		result       interface{}
 	}
-	return src
-}
-func (SD *SD) Parse(s string) (*url.URL, error) {
-	return url.Parse(SD.JiraHost() + s)
-}
+	tests := []struct {
+		name string
+		//fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			"get issue",
+			args{"BSI-2184", &gojira.Issue{}},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-func (SD *SD) JiraHost() string {
-
-	return os.Getenv("JIRA_HOST")
-}
-func (SD *SD) JiraUser() string {
-
-	return os.Getenv("JIRA_USER")
-}
-func (SD *SD) JiraPass() string {
-	return os.Getenv("JIRA_PASS")
+			I := is
+			if err := I.Issue(tt.args.issueIdOrKey, tt.args.result); (err != nil) != tt.wantErr {
+				t.Errorf("Issue() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
 }

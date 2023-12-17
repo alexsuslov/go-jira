@@ -41,7 +41,8 @@ func CloseErrLog(closer io.Closer) {
 func (SD *SD) ContextRequest(ctx context.Context,
 	Method string, URL url.URL, body io.Reader) (*http.Response, error) {
 
-	req, err := http.NewRequestWithContext(ctx, Method, URL.String(), body)
+	u := URL.String()
+	req, err := http.NewRequestWithContext(ctx, Method, u, body)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +72,7 @@ type ContextReq func(ctx context.Context,
 
 func (SD *SD) CReq(Method, Path string) ContextReq {
 	return func(ctx context.Context, values Values,
-		req, result interface{}) error {
+		req, result interface{}) (err error) {
 		if values != nil {
 			Path = Replace(Path, values)
 		}
@@ -80,16 +81,19 @@ func (SD *SD) CReq(Method, Path string) ContextReq {
 			return err
 		}
 
-		var buf *bytes.Buffer
+		var res *http.Response
+
 		if req != nil {
 			data, err := json.Marshal(req)
 			if err != nil {
 				return err
 			}
-			buf = bytes.NewBuffer(data)
+			buf := bytes.NewBuffer(data)
+			res, err = SD.ContextRequest(ctx, Method, *u, buf)
+		} else {
+			res, err = SD.ContextRequest(ctx, Method, *u, nil)
 		}
 
-		res, err := SD.ContextRequest(ctx, Method, *u, buf)
 		if err != nil {
 			return err
 		}
