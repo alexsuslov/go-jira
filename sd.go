@@ -28,6 +28,14 @@ import (
 	"strings"
 )
 
+/**
+ ___ ___
+/ __|   \
+\__ \ |) |
+|___/___/
+
+*/
+
 type SD struct{}
 
 type Service struct {

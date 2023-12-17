@@ -22,6 +22,14 @@ package jira
 
 import "context"
 
+/**
+ ___     _
+| _ \___| |___ ___
+|   / _ \ / -_|_-<
+|_|_\___/_\___/__/
+
+*/
+
 const ROLE = "/rest/api/2/applicationrole"
 const ROLE_KEY = "/rest/api/2/applicationrole/{key}"
 
