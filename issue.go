@@ -80,7 +80,7 @@ type IssueService struct {
 func (SD *SD) IssueService() *IssueService {
 	IS := Service{
 		ctx: context.Background(), sd: SD, Operation: map[string]ContextReq{}}
-	for k, v := range configDashboard {
+	for k, v := range configIssue {
 		IS.Operation[k] = SD.CReq(v[0], v[1])
 	}
 
@@ -99,10 +99,11 @@ func (I *IssueService) Create(NewIssue *gojira.Issue, result interface{}) error 
 }
 
 func (I *IssueService) ContextIssue(ctx context.Context, issueIdOrKey string, result interface{}) error {
-	if _, ok := I.Operation["Issue"]; !ok {
+	fn, ok := I.Operation["Issue"]
+	if !ok {
 		return fmt.Errorf("no operation")
 	}
-	return I.Operation["Issue"](ctx, Values{"issueIdOrKey": issueIdOrKey}, nil, result)
+	return fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, nil, result)
 }
 
 func (I *IssueService) Issue(issueIdOrKey string, result interface{}) error {
