@@ -20,7 +20,9 @@
 
 package jira
 
-import "context"
+import (
+	"context"
+)
 
 /**
    _           _
@@ -30,13 +32,15 @@ import "context"
 
 */
 
-const AVATAR = "/rest/api/2/applicationrole/{key}"
-const AVATARS = "/rest/api/2/universal_avatar/type/{type}/owner/{entityId}"
-const LOAD_AVATAR = "/rest/api/2/universal_avatar/type/{type}/owner/{entityId}"
-const DEL_AVATAR = "/rest/api/2/universal_avatar/type/{type}/owner/{owningObjectId}/avatar/{id}"
-const IMAGE = "/rest/api/2/universal_avatar/view/type/{type}"
-const IMAGE_ID = "/rest/api/2/universal_avatar/view/type/{type}/avatar/{id}"
-const IMAGE_OWNER = "/rest/api/2/universal_avatar/view/type/{type}"
+var configAvatar = map[string][2]string{
+	"Get":          {GET, "/rest/api/2/applicationrole/{key}"},
+	"Avatars":      {GET, "/rest/api/2/universal_avatar/type/{type}/owner/{entityId}"},
+	"Load":         {POST, "/rest/api/2/universal_avatar/type/{type}/owner/{entityId}"},
+	"Del":          {DEL, "/rest/api/2/universal_avatar/type/{type}/owner/{owningObjectId}/avatar/{id}"},
+	"Image":        {GET, "/rest/api/2/universal_avatar/view/type/{type}"},
+	"ImageByID":    {GET, "/rest/api/2/universal_avatar/view/type/{type}/avatar/{id}"},
+	"ImageByOwner": {GET, "/rest/api/2/universal_avatar/view/type/{type}"},
+}
 
 type AvatarService struct {
 	Service
@@ -44,15 +48,9 @@ type AvatarService struct {
 
 func (SD *SD) AvatarService() *AvatarService {
 	IS := Service{
-		ctx: context.Background(), sd: SD}
-	IS.Operation = map[string]ContextReq{
-		"Get":          SD.CReq(GET, AVATAR),
-		"Avatars":      SD.CReq(GET, AVATARS),
-		"Load":         SD.CReq(POST, LOAD_AVATAR),
-		"Del":          SD.CReq(DEL, DEL_AVATAR),
-		"Image":        SD.CReq(GET, IMAGE),
-		"ImageByID":    SD.CReq(GET, IMAGE_ID),
-		"ImageByOwner": SD.CReq(GET, IMAGE_OWNER),
+		ctx: context.Background(), sd: SD, Operation: map[string]ContextReq{}}
+	for k, v := range configAvatar {
+		IS.Operation[k] = SD.CReq(v[0], v[1])
 	}
 	return &AvatarService{IS}
 }

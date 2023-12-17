@@ -22,6 +22,7 @@ package jira
 
 import (
 	"context"
+	"fmt"
 
 	gojira "github.com/andygrunwald/go-jira"
 )
@@ -50,39 +51,46 @@ const ISSUE_NOTIFY = "/rest/api/2/issue/{issueIdOrKey}/notify"
 const ISSUE_TRANSITIONS = "/rest/api/2/issue/{issueIdOrKey}/transitions"
 const ISSUES_ARCHIVE_EXPORT = "/rest/api/2/issues/archive/export"
 
+var configIssue = map[string][2]string{
+	"Issue":            {GET, ISSUE},
+	"Create":           {POST, ISSUES},
+	"ArchiveByID":      {PUT, ISSUE_ARCHIVE},
+	"ArchiveJQL":       {POST, ISSUE_ARCHIVE},
+	"CreateBulk":       {POST, ISSUE_BULK},
+	"Meta":             {GET, ISSUE_CREATEMETA},
+	"ProjectMetaTypes": {GET, ISSUE_CREATEMETA_ISSUETYPES},
+	"ProjectMetaType":  {GET, ISSUE_CREATEMETA_ISSUETYPE},
+	"UnArchive":        {PUT, ISSUE_UNARCHIVE},
+	"Edit":             {PUT, ISSUE},
+	"Del":              {DEL, ISSUE},
+	"Assign":           {PUT, ISSUE_ASSIGNEE},
+	"Changelog":        {GET, ISSUE_CHANGELOG},
+	"ChangelogID":      {POST, ISSUE_CHANGELOG_LIST},
+	"EditMeta":         {GET, ISSUE_EDIT_META},
+	"Notification":     {POST, ISSUE_NOTIFY},
+	"Transitions":      {GET, ISSUE_TRANSITIONS},
+	"DoTransitions":    {POST, ISSUE_TRANSITIONS},
+	"Export":           {PUT, ISSUES_ARCHIVE_EXPORT},
+}
+
 type IssueService struct {
 	Service
 }
 
 func (SD *SD) IssueService() *IssueService {
 	IS := Service{
-		ctx: context.Background(), sd: SD}
-
-	IS.Operation = map[string]ContextReq{
-		"Issue":            SD.CReq(GET, ISSUE),
-		"Create":           SD.CReq(POST, ISSUES),
-		"ArchiveByID":      SD.CReq(PUT, ISSUE_ARCHIVE),
-		"ArchiveJQL":       SD.CReq(POST, ISSUE_ARCHIVE),
-		"CreateBulk":       SD.CReq(POST, ISSUE_BULK),
-		"Meta":             SD.CReq(GET, ISSUE_CREATEMETA),
-		"ProjectMetaTypes": SD.CReq(GET, ISSUE_CREATEMETA_ISSUETYPES),
-		"ProjectMetaType":  SD.CReq(GET, ISSUE_CREATEMETA_ISSUETYPE),
-		"UnArchive":        SD.CReq(PUT, ISSUE_UNARCHIVE),
-		"Edit":             SD.CReq(PUT, ISSUE),
-		"Del":              SD.CReq(DEL, ISSUE),
-		"Assign":           SD.CReq(PUT, ISSUE_ASSIGNEE),
-		"Changelog":        SD.CReq(GET, ISSUE_CHANGELOG),
-		"ChangelogID":      SD.CReq(POST, ISSUE_CHANGELOG_LIST),
-		"EditMeta":         SD.CReq(GET, ISSUE_EDIT_META),
-		"Notification":     SD.CReq(POST, ISSUE_NOTIFY),
-		"Transitions":      SD.CReq(GET, ISSUE_TRANSITIONS),
-		"DoTransitions":    SD.CReq(POST, ISSUE_TRANSITIONS),
-		"Export":           SD.CReq(PUT, ISSUES_ARCHIVE_EXPORT),
+		ctx: context.Background(), sd: SD, Operation: map[string]ContextReq{}}
+	for k, v := range configDashboard {
+		IS.Operation[k] = SD.CReq(v[0], v[1])
 	}
+
 	return &IssueService{IS}
 }
 
 func (I *IssueService) ContextCreate(ctx context.Context, NewIssue *gojira.Issue, result interface{}) error {
+	if _, ok := I.Operation["Create"]; !ok {
+		return fmt.Errorf("no operation")
+	}
 	return I.Operation["Create"](ctx, nil, NewIssue, result)
 }
 
@@ -91,6 +99,9 @@ func (I *IssueService) Create(NewIssue *gojira.Issue, result interface{}) error 
 }
 
 func (I *IssueService) ContextIssue(ctx context.Context, issueIdOrKey string, result interface{}) error {
+	if _, ok := I.Operation["Issue"]; !ok {
+		return fmt.Errorf("no operation")
+	}
 	return I.Operation["Issue"](ctx, Values{"issueIdOrKey": issueIdOrKey}, nil, result)
 }
 
@@ -99,6 +110,9 @@ func (I *IssueService) Issue(issueIdOrKey string, result interface{}) error {
 }
 
 func (I *IssueService) ContextTransitions(ctx context.Context, issueIdOrKey string, result interface{}) error {
+	if _, ok := I.Operation["Transitions"]; !ok {
+		return fmt.Errorf("no operation")
+	}
 	return I.Operation["Transitions"](ctx, Values{"issueIdOrKey": issueIdOrKey}, nil, result)
 }
 
@@ -107,9 +121,12 @@ func (I *IssueService) Transitions(issueIdOrKey string, result interface{}) erro
 }
 
 func (I *IssueService) ContextDoTransitions(ctx context.Context, issueIdOrKey, transitionID string, result interface{}) error {
+	if _, ok := I.Operation["DoTransitions"]; !ok {
+		return fmt.Errorf("no operation")
+	}
 	payload := gojira.CreateTransitionPayload{
 		Transition: gojira.TransitionPayload{
 			ID: transitionID}}
 
-	return I.Operation["Transitions"](ctx, Values{"issueIdOrKey": issueIdOrKey}, payload, result)
+	return I.Operation["DoTransitions"](ctx, Values{"issueIdOrKey": issueIdOrKey}, payload, result)
 }

@@ -30,8 +30,6 @@ import "context"
 
 */
 
-const AUDIT = "/rest/api/2/auditing/record"
-
 type AuditService struct {
 	Service
 }
@@ -40,7 +38,7 @@ func (SD *SD) AuditService() *AuditService {
 	IS := Service{
 		ctx: context.Background(), sd: SD}
 	IS.Operation = map[string]ContextReq{
-		"Get": SD.CReq(GET, AUDIT),
+		"Get": SD.CReq(GET, "/rest/api/2/auditing/record"),
 	}
 	return &AuditService{IS}
 }
