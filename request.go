@@ -90,12 +90,14 @@ func (SD *SD) CReq(Method, Path string) ContextReq {
 			}
 			buf := bytes.NewBuffer(data)
 			res, err = SD.ContextRequest(ctx, Method, *u, buf)
+			if err != nil {
+				return err
+			}
 		} else {
 			res, err = SD.ContextRequest(ctx, Method, *u, nil)
-		}
-
-		if err != nil {
-			return err
+			if err != nil {
+				return err
+			}
 		}
 
 		defer CloseErrLog(res.Body)
