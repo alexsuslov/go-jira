@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package v0
+package v2
 
 import (
 	"context"
@@ -99,7 +99,8 @@ func (I *IssueService) CommentsCtx(ctx context.Context, issueIdOrKey string,
 	if !ok {
 		return fmt.Errorf("no operation")
 	}
-	return fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, nil, result)
+	res, err := fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, nil)
+	return I.sd.JsonDecode(res, err, result)
 }
 
 // Comments Returns all comments for an issue.
@@ -118,14 +119,21 @@ func (I *IssueService) CommentAddCtx(ctx context.Context, issueIdOrKey string,
 	if !ok {
 		return fmt.Errorf("no operation")
 	}
-	return fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, comment, result)
+	res, err := fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, comment)
+	return I.sd.JsonDecode(res, err, result)
+}
+
+func (I *IssueService) CommentAdd(issueIdOrKey string,
+	comment *gojira.Comment, result interface{}) error {
+	return I.CommentAddCtx(I.ctx, issueIdOrKey, comment, result)
 }
 
 func (I *IssueService) CreateCtx(ctx context.Context, NewIssue *gojira.Issue, result interface{}) error {
 	if _, ok := I.Operation["Create"]; !ok {
 		return fmt.Errorf("no operation")
 	}
-	return I.Operation["Create"](ctx, nil, NewIssue, result)
+	res, err := I.Operation["Create"](ctx, nil, NewIssue)
+	return I.sd.JsonDecode(res, err, result)
 }
 
 func (I *IssueService) Create(NewIssue *gojira.Issue, result interface{}) error {
@@ -137,7 +145,8 @@ func (I *IssueService) IssueCtx(ctx context.Context, issueIdOrKey string, result
 	if !ok {
 		return fmt.Errorf("no operation")
 	}
-	return fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, nil, result)
+	res, err := fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, nil)
+	return I.sd.JsonDecode(res, err, result)
 }
 
 func (I *IssueService) Issue(issueIdOrKey string, result interface{}) error {
@@ -148,14 +157,15 @@ func (I *IssueService) TransitionsCtx(ctx context.Context, issueIdOrKey string, 
 	if _, ok := I.Operation["Transitions"]; !ok {
 		return fmt.Errorf("no operation")
 	}
-	return I.Operation["Transitions"](ctx, Values{"issueIdOrKey": issueIdOrKey}, nil, result)
+	res, err := I.Operation["Transitions"](ctx, Values{"issueIdOrKey": issueIdOrKey}, nil)
+	return I.sd.JsonDecode(res, err, result)
 }
 
 func (I *IssueService) Transitions(issueIdOrKey string, result interface{}) error {
 	return I.TransitionsCtx(I.ctx, issueIdOrKey, result)
 }
 
-func (I *IssueService) DoTransitionsCtx(ctx context.Context, issueIdOrKey, transitionID string, result interface{}) error {
+func (I *IssueService) DoTransitionCtx(ctx context.Context, issueIdOrKey, transitionID string, result interface{}) error {
 	if _, ok := I.Operation["DoTransitions"]; !ok {
 		return fmt.Errorf("no operation")
 	}
@@ -163,5 +173,10 @@ func (I *IssueService) DoTransitionsCtx(ctx context.Context, issueIdOrKey, trans
 		Transition: gojira.TransitionPayload{
 			ID: transitionID}}
 
-	return I.Operation["DoTransitions"](ctx, Values{"issueIdOrKey": issueIdOrKey}, payload, result)
+	res, err := I.Operation["DoTransitions"](ctx, Values{"issueIdOrKey": issueIdOrKey}, payload)
+	return I.sd.JsonDecode(res, err, result)
+}
+
+func (I *IssueService) DoTransition(issueIdOrKey, transitionID string, result interface{}) error {
+	return I.DoTransitionCtx(I.ctx, issueIdOrKey, transitionID, result)
 }

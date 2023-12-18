@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package v0
+package v2
 
 import (
 	"bytes"
@@ -26,11 +26,14 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
 )
 
 type AttachmentService struct {
 	Service
 }
+
+const ATTACHMENT = "/secure/attachment/{id}/"
 
 var configAttachment = map[string][2]string{
 	"AttachmentPost": {POST, "/rest/api/3/issue/{issueIdOrKey}/attachments"},
@@ -54,7 +57,7 @@ func (SD *SD) AttachmentService() *AttachmentService {
 }
 
 // AttachmentPostContext uploads r (io.Reader) as an attachment to a given issueIdOrKey
-func (AS *AttachmentService) AttachmentPostContext(ctx context.Context, issueIdOrKey string,
+func (AS *AttachmentService) AttachmentPostCtx(ctx context.Context, issueIdOrKey string,
 	r io.Reader, attachmentName string, result interface{}) error {
 
 	fn, ok := AS.Operation["AttachmentPost"]
@@ -82,6 +85,26 @@ func (AS *AttachmentService) AttachmentPostContext(ctx context.Context, issueIdO
 		return err
 
 	}
+	res, err := fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, b)
+	return AS.sd.JsonDecode(res, err, result)
+}
 
-	return fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, b, result)
+func (AS *AttachmentService) AttachmentPost(issueIdOrKey string,
+	r io.Reader, attachmentName string, result interface{}) error {
+	return AS.AttachmentPostCtx(AS.ctx, issueIdOrKey, r, attachmentName, result)
+}
+
+func (AS *AttachmentService) DownloadAttachmentCtx(ctx context.Context, attachmentID string) (*http.Response, error) {
+
+	u, err := AS.sd.Parse(
+		Replace(ATTACHMENT, Values{"attachmentID": attachmentID}))
+	if err != nil {
+		return nil, err
+	}
+
+	return AS.sd.ContextRequest(ctx, GET, u, nil)
+}
+
+func (AS *AttachmentService) DownloadAttachment(attachmentID string) (*http.Response, error) {
+	return AS.DownloadAttachmentCtx(AS.ctx, attachmentID)
 }

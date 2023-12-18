@@ -18,10 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package v0
+package v2
 
 import (
 	"context"
+	"fmt"
+	"net/url"
 )
 
 /**
@@ -37,7 +39,7 @@ const USER_ASSIGNABLE_MULTIPROJECTSEARCH = "/rest/api/2/user/assignable/multiPro
 const USER_ASSIGNABLE_SEARCH = "/rest/api/2/user/assignable/search"
 const USER_PERMISSION_SEARCH = "/rest/api/2/user/permission/search"
 const USER_PICKER = "/rest/api/2/user/picker"
-const USER_SEARCH = "/rest/api/2/user/search"
+const USER_SEARCH = "/rest/api/2/user/search?{query}"
 const USER_SEARCH_QUERY = "/rest/api/2/user/search/query"
 const USER_SEARCH_QUERY_KEY = "/rest/api/2/user/search/query/key"
 const USER_VIEWISSUE_SEARCH = "/rest/api/2/user_/viewissue/search"
@@ -73,4 +75,19 @@ func (SD *SD) UserService() *UserService {
 		"Search":     SD.CReq(POST, USER_SEARCH),
 	}
 	return &UserService{IS}
+}
+
+func (US *UserService) SearchCtx(ctx context.Context, values url.Values, result interface{}) error {
+	fn, ok := US.Operation["Issue"]
+	if !ok {
+		return fmt.Errorf("no operation")
+	}
+
+	res, err := fn(ctx, Values{"qyery": values.Encode()}, nil)
+	return US.sd.JsonDecode(res, err, result)
+
+}
+
+func (US *UserService) Search(values url.Values, result interface{}) error {
+	return US.SearchCtx(US.ctx, values, result)
 }

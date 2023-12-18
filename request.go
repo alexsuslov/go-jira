@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package v0
+package v2
 
 import (
 	"bytes"
@@ -39,7 +39,7 @@ func CloseErrLog(closer io.Closer) {
 }
 
 func (SD *SD) ContextRequest(ctx context.Context,
-	Method string, URL url.URL, body io.Reader) (*http.Response, error) {
+	Method string, URL *url.URL, body io.Reader) (*http.Response, error) {
 
 	u := URL.String()
 	req, err := http.NewRequestWithContext(ctx, Method, u, body)
@@ -68,39 +68,35 @@ func (SD *SD) ContextRequest(ctx context.Context,
 
 type ContextReq func(ctx context.Context,
 	values Values,
-	req, result interface{}) error
+	req interface{}) (*http.Response, error)
 
 func (SD *SD) CReq(Method, Path string) ContextReq {
 	return func(ctx context.Context, values Values,
-		req, result interface{}) (err error) {
+		req interface{}) (*http.Response, error) {
 		if values != nil {
 			Path = Replace(Path, values)
 		}
 		u, err := SD.Parse(Path)
 		if err != nil {
-			return err
+			return nil, err
 		}
-
-		var res *http.Response
 
 		if req != nil {
 			data, err := json.Marshal(req)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			buf := bytes.NewBuffer(data)
-			res, err = SD.ContextRequest(ctx, Method, *u, buf)
-			if err != nil {
-				return err
-			}
-		} else {
-			res, err = SD.ContextRequest(ctx, Method, *u, nil)
-			if err != nil {
-				return err
-			}
+			return SD.ContextRequest(ctx, Method, u, buf)
 		}
-
-		defer CloseErrLog(res.Body)
-		return json.NewDecoder(res.Body).Decode(result)
+		return SD.ContextRequest(ctx, Method, u, nil)
 	}
+}
+
+func (SD *SD) JsonDecode(res *http.Response, err error, result interface{}) error {
+	if err != nil {
+		return err
+	}
+	defer CloseErrLog(res.Body)
+	return json.NewDecoder(res.Body).Decode(result)
 }
