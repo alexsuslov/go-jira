@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package jira
+package v0
 
 import (
 	"context"
@@ -36,7 +36,9 @@ import (
 
 */
 
-type SD struct{}
+type SD struct {
+	host, user, pass *string
+}
 
 type Service struct {
 	ctx       context.Context
@@ -53,17 +55,41 @@ func Replace(src string, values Values) string {
 	return src
 }
 func (SD *SD) Parse(s string) (*url.URL, error) {
+
 	return url.Parse(SD.JiraHost() + s)
 }
 
 func (SD *SD) JiraHost() string {
-
+	if SD.host != nil {
+		return *SD.host
+	}
 	return os.Getenv("JIRA_HOST")
 }
-func (SD *SD) JiraUser() string {
 
+func (SD *SD) JiraUser() string {
+	if SD.user != nil {
+		return *SD.user
+	}
 	return os.Getenv("JIRA_USER")
 }
 func (SD *SD) JiraPass() string {
+	if SD.pass != nil {
+		return *SD.pass
+	}
 	return os.Getenv("JIRA_PASS")
+}
+
+func (SD *SD) SetJiraHost(s string) *SD {
+	SD.host = &s
+	return SD
+}
+
+func (SD *SD) SetJiraUser(s string) *SD {
+	SD.user = &s
+	return SD
+}
+
+func (SD *SD) SetJiraPass(s string) *SD {
+	SD.pass = &s
+	return SD
 }

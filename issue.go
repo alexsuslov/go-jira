@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package jira
+package v0
 
 import (
 	"context"
@@ -71,6 +71,9 @@ var configIssue = map[string][2]string{
 	"Transitions":      {GET, ISSUE_TRANSITIONS},
 	"DoTransitions":    {POST, ISSUE_TRANSITIONS},
 	"Export":           {PUT, ISSUES_ARCHIVE_EXPORT},
+
+	"CommentsByID": {GET, "/rest/api/2/issue/{issueIdOrKey}/comment"},
+	"CommentAdd":   {POST, "/rest/api/2/issue/{issueIdOrKey}/comment"},
 }
 
 type IssueService struct {
@@ -87,7 +90,38 @@ func (SD *SD) IssueService() *IssueService {
 	return &IssueService{IS}
 }
 
-func (I *IssueService) ContextCreate(ctx context.Context, NewIssue *gojira.Issue, result interface{}) error {
+// СommentsCtx Returns all comments for an issue.
+//
+// https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-comments/#api-rest-api-2-issue-issueidorkey-comment-get
+func (I *IssueService) CommentsCtx(ctx context.Context, issueIdOrKey string,
+	result interface{}) error {
+	fn, ok := I.Operation["CommentsByID"]
+	if !ok {
+		return fmt.Errorf("no operation")
+	}
+	return fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, nil, result)
+}
+
+// Comments Returns all comments for an issue.
+func (I *IssueService) Comments(ctx context.Context, issueIdOrKey string,
+	result interface{}) error {
+	return I.CommentsCtx(ctx, issueIdOrKey, result)
+}
+
+// CommentAddCtx adds a new comment to issueID.
+//
+// Jira API docs: https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-comments/#api-rest-api-2-issue-issueidorkey-comment-post
+func (I *IssueService) CommentAddCtx(ctx context.Context, issueIdOrKey string,
+	comment *gojira.Comment, result interface{}) error {
+
+	fn, ok := I.Operation["Issue"]
+	if !ok {
+		return fmt.Errorf("no operation")
+	}
+	return fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, comment, result)
+}
+
+func (I *IssueService) CreateCtx(ctx context.Context, NewIssue *gojira.Issue, result interface{}) error {
 	if _, ok := I.Operation["Create"]; !ok {
 		return fmt.Errorf("no operation")
 	}
@@ -95,10 +129,10 @@ func (I *IssueService) ContextCreate(ctx context.Context, NewIssue *gojira.Issue
 }
 
 func (I *IssueService) Create(NewIssue *gojira.Issue, result interface{}) error {
-	return I.ContextCreate(I.ctx, NewIssue, result)
+	return I.CreateCtx(I.ctx, NewIssue, result)
 }
 
-func (I *IssueService) ContextIssue(ctx context.Context, issueIdOrKey string, result interface{}) error {
+func (I *IssueService) IssueCtx(ctx context.Context, issueIdOrKey string, result interface{}) error {
 	fn, ok := I.Operation["Issue"]
 	if !ok {
 		return fmt.Errorf("no operation")
@@ -107,10 +141,10 @@ func (I *IssueService) ContextIssue(ctx context.Context, issueIdOrKey string, re
 }
 
 func (I *IssueService) Issue(issueIdOrKey string, result interface{}) error {
-	return I.ContextIssue(I.ctx, issueIdOrKey, result)
+	return I.IssueCtx(I.ctx, issueIdOrKey, result)
 }
 
-func (I *IssueService) ContextTransitions(ctx context.Context, issueIdOrKey string, result interface{}) error {
+func (I *IssueService) TransitionsCtx(ctx context.Context, issueIdOrKey string, result interface{}) error {
 	if _, ok := I.Operation["Transitions"]; !ok {
 		return fmt.Errorf("no operation")
 	}
@@ -118,10 +152,10 @@ func (I *IssueService) ContextTransitions(ctx context.Context, issueIdOrKey stri
 }
 
 func (I *IssueService) Transitions(issueIdOrKey string, result interface{}) error {
-	return I.ContextTransitions(I.ctx, issueIdOrKey, result)
+	return I.TransitionsCtx(I.ctx, issueIdOrKey, result)
 }
 
-func (I *IssueService) ContextDoTransitions(ctx context.Context, issueIdOrKey, transitionID string, result interface{}) error {
+func (I *IssueService) DoTransitionsCtx(ctx context.Context, issueIdOrKey, transitionID string, result interface{}) error {
 	if _, ok := I.Operation["DoTransitions"]; !ok {
 		return fmt.Errorf("no operation")
 	}

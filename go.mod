@@ -1,4 +1,4 @@
-module github.com/alexsuslov/go-jira
+module github.com/alexsuslov/go-jira-v0
 
 go 1.21.5
 
