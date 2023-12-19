@@ -21,10 +21,8 @@
 package v2
 
 import (
-	"bytes"
 	"context"
 	"io"
-	"mime/multipart"
 
 	req "github.com/imroc/req/v3"
 )
@@ -61,25 +59,6 @@ func (SD *SD) AttachmentService() *AttachmentService {
 func (AS *AttachmentService) AttachmentPostCtx(ctx context.Context, issueIdOrKey string,
 	r io.Reader, attachmentName string, result interface{}) error {
 
-	b := new(bytes.Buffer)
-	writer := multipart.NewWriter(b)
-
-	fw, err := writer.CreateFormFile("file", attachmentName)
-	if err != nil {
-		return err
-
-	}
-	if r != nil {
-		if _, err = io.Copy(fw, r); err != nil {
-			return err
-		}
-	}
-
-	err = writer.Close()
-	if err != nil {
-		return err
-	}
-
 	Path := Replace(ATTACHMENT_POST, Values{"issueIdOrKey": issueIdOrKey})
 	u, err := AS.sd.Parse(Path)
 	if err != nil {
@@ -91,6 +70,7 @@ func (AS *AttachmentService) AttachmentPostCtx(ctx context.Context, issueIdOrKey
 		SetHeader("X-Atlassian-Token", "no-check").
 		SetBasicAuth(AS.sd.JiraUser(), AS.sd.JiraPass()).
 		SetFileReader("file", attachmentName, r).
+		SetContext(ctx).
 		Post(u.String())
 
 	return AS.sd.JsonDecode(res.Body, err, result)
