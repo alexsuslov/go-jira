@@ -53,7 +53,7 @@ const ISSUES_ARCHIVE_EXPORT = "/rest/api/2/issues/archive/export"
 
 var configIssue = map[string][2]string{
 	"Issue":            {GET, ISSUE},
-	"Create":           {POST, ISSUES},
+	"Create":           {POST, "/rest/api/2/issue"},
 	"ArchiveByID":      {PUT, ISSUE_ARCHIVE},
 	"ArchiveJQL":       {POST, ISSUE_ARCHIVE},
 	"CreateBulk":       {POST, ISSUE_BULK},
@@ -86,7 +86,6 @@ func (SD *SD) IssueService() *IssueService {
 	for k, v := range configIssue {
 		IS.Operation[k] = SD.CReq(v[0], v[1])
 	}
-
 	return &IssueService{IS}
 }
 
@@ -115,11 +114,12 @@ func (I *IssueService) Comments(ctx context.Context, issueIdOrKey string,
 func (I *IssueService) CommentAddCtx(ctx context.Context, issueIdOrKey string,
 	comment *gojira.Comment, result interface{}) error {
 
-	fn, ok := I.Operation["Issue"]
+	fn, ok := I.Operation["CommentAdd"]
 	if !ok {
 		return fmt.Errorf("no operation")
 	}
 	res, err := fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, comment)
+
 	return I.sd.JsonDecode(res, err, result)
 }
 
@@ -129,10 +129,12 @@ func (I *IssueService) CommentAdd(issueIdOrKey string,
 }
 
 func (I *IssueService) CreateCtx(ctx context.Context, NewIssue *gojira.Issue, result interface{}) error {
-	if _, ok := I.Operation["Create"]; !ok {
-		return fmt.Errorf("no operation")
+	fn, ok := I.Operation["Create"]
+	if !ok {
+		return fmt.Errorf("no operation Create")
 	}
-	res, err := I.Operation["Create"](ctx, nil, NewIssue)
+	res, err := fn(ctx, nil, NewIssue)
+
 	return I.sd.JsonDecode(res, err, result)
 }
 
@@ -154,10 +156,11 @@ func (I *IssueService) Issue(issueIdOrKey string, result interface{}) error {
 }
 
 func (I *IssueService) TransitionsCtx(ctx context.Context, issueIdOrKey string, result interface{}) error {
-	if _, ok := I.Operation["Transitions"]; !ok {
+	fn, ok := I.Operation["Transitions"]
+	if !ok {
 		return fmt.Errorf("no operation")
 	}
-	res, err := I.Operation["Transitions"](ctx, Values{"issueIdOrKey": issueIdOrKey}, nil)
+	res, err := fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, nil)
 	return I.sd.JsonDecode(res, err, result)
 }
 
@@ -166,14 +169,15 @@ func (I *IssueService) Transitions(issueIdOrKey string, result interface{}) erro
 }
 
 func (I *IssueService) DoTransitionCtx(ctx context.Context, issueIdOrKey, transitionID string, result interface{}) error {
-	if _, ok := I.Operation["DoTransitions"]; !ok {
+	fn, ok := I.Operation["DoTransitions"]
+	if !ok {
 		return fmt.Errorf("no operation")
 	}
 	payload := gojira.CreateTransitionPayload{
 		Transition: gojira.TransitionPayload{
 			ID: transitionID}}
 
-	res, err := I.Operation["DoTransitions"](ctx, Values{"issueIdOrKey": issueIdOrKey}, payload)
+	res, err := fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, payload)
 	return I.sd.JsonDecode(res, err, result)
 }
 

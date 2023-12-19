@@ -23,28 +23,29 @@ package v2
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"mime/multipart"
-	"net/http"
+
+	req "github.com/imroc/req/v3"
 )
 
 type AttachmentService struct {
 	Service
 }
 
+const ATTACHMENT_POST = "/rest/api/2/issue/{issueIdOrKey}/attachments"
 const ATTACHMENT = "/secure/attachment/{id}/"
 
 var configAttachment = map[string][2]string{
-	"AttachmentPost": {POST, "/rest/api/3/issue/{issueIdOrKey}/attachments"},
-	"Get":            {GET, "/rest/api/3/attachment/content/{id}"},
-	"Del":            {DEL, "/rest/api/3/attachment/{id}"},
+	//"AttachmentPost": {POST, "/rest/api/2/issue/{issueIdOrKey}/attachments", ""},
+	"Get": {GET, "/rest/api/2/attachment/content/{id}"},
+	"Del": {DEL, "/rest/api/2/attachment/{id}"},
 
-	"Meta":      {GET, "/rest/api/3/attachment/meta"},
-	"Thumbnail": {GET, "/rest/api/3/attachment/thumbnail/{id}"},
-	"Metadata":  {GET, "/rest/api/3/attachment/{id}"},
-	"Human":     {GET, "/rest/api/3/attachment/{id}/expand/human"},
-	"Raw":       {GET, "/rest/api/3/attachment/{id}/expand/raw"},
+	"Meta":      {GET, "/rest/api/2/attachment/meta"},
+	"Thumbnail": {GET, "/rest/api/2/attachment/thumbnail/{id}"},
+	"Metadata":  {GET, "/rest/api/2/attachment/{id}"},
+	"Human":     {GET, "/rest/api/2/attachment/{id}/expand/human"},
+	"Raw":       {GET, "/rest/api/2/attachment/{id}/expand/raw"},
 }
 
 func (SD *SD) AttachmentService() *AttachmentService {
@@ -60,11 +61,6 @@ func (SD *SD) AttachmentService() *AttachmentService {
 func (AS *AttachmentService) AttachmentPostCtx(ctx context.Context, issueIdOrKey string,
 	r io.Reader, attachmentName string, result interface{}) error {
 
-	fn, ok := AS.Operation["AttachmentPost"]
-	if !ok {
-		return fmt.Errorf("no operation")
-	}
-
 	b := new(bytes.Buffer)
 	writer := multipart.NewWriter(b)
 
@@ -75,7 +71,6 @@ func (AS *AttachmentService) AttachmentPostCtx(ctx context.Context, issueIdOrKey
 	}
 	if r != nil {
 		if _, err = io.Copy(fw, r); err != nil {
-
 			return err
 		}
 	}
@@ -83,10 +78,22 @@ func (AS *AttachmentService) AttachmentPostCtx(ctx context.Context, issueIdOrKey
 	err = writer.Close()
 	if err != nil {
 		return err
-
 	}
-	res, err := fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, b)
-	return AS.sd.JsonDecode(res, err, result)
+
+	Path := Replace(ATTACHMENT_POST, Values{"issueIdOrKey": issueIdOrKey})
+	u, err := AS.sd.Parse(Path)
+	if err != nil {
+		return err
+	}
+
+	client := req.C()
+	res, err := client.R().
+		SetHeader("X-Atlassian-Token", "no-check").
+		SetBasicAuth(AS.sd.JiraUser(), AS.sd.JiraPass()).
+		SetFileReader("file", attachmentName, r).
+		Post(u.String())
+
+	return AS.sd.JsonDecode(res.Body, err, result)
 }
 
 func (AS *AttachmentService) AttachmentPost(issueIdOrKey string,
@@ -94,7 +101,7 @@ func (AS *AttachmentService) AttachmentPost(issueIdOrKey string,
 	return AS.AttachmentPostCtx(AS.ctx, issueIdOrKey, r, attachmentName, result)
 }
 
-func (AS *AttachmentService) DownloadAttachmentCtx(ctx context.Context, attachmentID string) (*http.Response, error) {
+func (AS *AttachmentService) DownloadAttachmentCtx(ctx context.Context, attachmentID string) (io.ReadCloser, error) {
 
 	u, err := AS.sd.Parse(
 		Replace(ATTACHMENT, Values{"attachmentID": attachmentID}))
@@ -105,6 +112,6 @@ func (AS *AttachmentService) DownloadAttachmentCtx(ctx context.Context, attachme
 	return AS.sd.ContextRequest(ctx, GET, u, nil)
 }
 
-func (AS *AttachmentService) DownloadAttachment(attachmentID string) (*http.Response, error) {
+func (AS *AttachmentService) DownloadAttachment(attachmentID string) (io.ReadCloser, error) {
 	return AS.DownloadAttachmentCtx(AS.ctx, attachmentID)
 }

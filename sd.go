@@ -22,10 +22,14 @@ package v2
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 /**
@@ -38,6 +42,7 @@ import (
 
 type SD struct {
 	host, user, pass *string
+	debug            bool
 }
 
 type Service struct {
@@ -57,6 +62,10 @@ func Replace(src string, values Values) string {
 func (SD *SD) Parse(s string) (*url.URL, error) {
 
 	return url.Parse(SD.JiraHost() + s)
+}
+
+func (SD *SD) Debug(v bool) {
+	SD.debug = v
 }
 
 func (SD *SD) JiraHost() string {
@@ -92,4 +101,23 @@ func (SD *SD) SetJiraUser(s string) *SD {
 func (SD *SD) SetJiraPass(s string) *SD {
 	SD.pass = &s
 	return SD
+}
+
+func (SD *SD) JsonDecode(Body io.ReadCloser, err error, result interface{}) error {
+	if err != nil {
+		return err
+	}
+	defer CloseErrLog(Body)
+	if SD.debug {
+		data, err := io.ReadAll(Body)
+		if err != nil {
+			return err
+		}
+		body := string(data)
+		logrus.
+			WithField("body", body).
+			Info("body")
+		return json.Unmarshal(data, result)
+	}
+	return json.NewDecoder(Body).Decode(result)
 }

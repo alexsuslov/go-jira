@@ -29,6 +29,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/imroc/req/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -39,7 +40,44 @@ func CloseErrLog(closer io.Closer) {
 }
 
 func (SD *SD) ContextRequest(ctx context.Context,
-	Method string, URL *url.URL, body io.Reader) (*http.Response, error) {
+	Method string, URL *url.URL, body io.Reader) (r io.ReadCloser, err error) {
+
+	client := req.C()
+
+	Request := client.R().
+		SetBasicAuth(SD.JiraUser(), SD.JiraPass())
+	if body != nil {
+		Request.
+			SetHeader("Content-Type", "application/json").
+			SetBody(body)
+	}
+	u := URL.String()
+	var res *req.Response
+	switch Method {
+	case GET:
+		res, err = Request.Get(u)
+	case POST:
+		res, err = Request.Post(u)
+	case PUT:
+		res, err = Request.Put(u)
+	case DEL:
+		res, err = Request.Delete(u)
+	default:
+		return nil, fmt.Errorf("unknown method: %v", Method)
+	}
+
+	if res.StatusCode < 200 || res.StatusCode >= 400 {
+		data, _ := io.ReadAll(res.Body)
+		defer CloseErrLog(res.Body)
+
+		return nil, fmt.Errorf("%d:%s", res.StatusCode, string(data))
+	}
+
+	return res.Body, nil
+}
+
+func (SD *SD) ContextRequest1(ctx context.Context,
+	Method string, URL *url.URL, body io.Reader) (io.ReadCloser, error) {
 
 	u := URL.String()
 	req, err := http.NewRequestWithContext(ctx, Method, u, body)
@@ -49,6 +87,10 @@ func (SD *SD) ContextRequest(ctx context.Context,
 
 	req.SetBasicAuth(SD.JiraUser(), SD.JiraPass())
 
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
 	client := http.Client{}
 
 	res, err := client.Do(req)
@@ -56,26 +98,28 @@ func (SD *SD) ContextRequest(ctx context.Context,
 		return nil, err
 	}
 
-	if res.StatusCode < 200 && res.StatusCode >= 400 {
+	if res.StatusCode < 200 || res.StatusCode >= 400 {
 		data, _ := io.ReadAll(res.Body)
 		defer CloseErrLog(res.Body)
 
 		return nil, fmt.Errorf("%d:%s", res.StatusCode, string(data))
 	}
 
-	return res, nil
+	return res.Body, nil
 }
 
 type ContextReq func(ctx context.Context,
 	values Values,
-	req interface{}) (*http.Response, error)
+	req interface{}) (io.ReadCloser, error)
 
 func (SD *SD) CReq(Method, Path string) ContextReq {
 	return func(ctx context.Context, values Values,
-		req interface{}) (*http.Response, error) {
+		req interface{}) (io.ReadCloser, error) {
+
 		if values != nil {
 			Path = Replace(Path, values)
 		}
+
 		u, err := SD.Parse(Path)
 		if err != nil {
 			return nil, err
@@ -89,14 +133,7 @@ func (SD *SD) CReq(Method, Path string) ContextReq {
 			buf := bytes.NewBuffer(data)
 			return SD.ContextRequest(ctx, Method, u, buf)
 		}
+
 		return SD.ContextRequest(ctx, Method, u, nil)
 	}
-}
-
-func (SD *SD) JsonDecode(res *http.Response, err error, result interface{}) error {
-	if err != nil {
-		return err
-	}
-	defer CloseErrLog(res.Body)
-	return json.NewDecoder(res.Body).Decode(result)
 }

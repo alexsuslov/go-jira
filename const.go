@@ -32,3 +32,10 @@ const GET = "GET"
 const POST = "POST"
 const PUT = "PUT"
 const DEL = "DEL"
+
+type Head map[string]string
+
+var JSON = Head{"Content-Type": "application/json"}
+
+//var NO_CHECK = Head{"X-Atlassian-Token": "no-check"}
+//var headers = map[string]Head{"json": JSON}

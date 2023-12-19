@@ -32,14 +32,14 @@ import (
 
 */
 
-var configAvatar = map[string][2]string{
-	"Get":          {GET, "/rest/api/2/applicationrole/{key}"},
-	"Avatars":      {GET, "/rest/api/2/universal_avatar/type/{type}/owner/{entityId}"},
-	"Load":         {POST, "/rest/api/2/universal_avatar/type/{type}/owner/{entityId}"},
-	"Del":          {DEL, "/rest/api/2/universal_avatar/type/{type}/owner/{owningObjectId}/avatar/{id}"},
-	"Image":        {GET, "/rest/api/2/universal_avatar/view/type/{type}"},
-	"ImageByID":    {GET, "/rest/api/2/universal_avatar/view/type/{type}/avatar/{id}"},
-	"ImageByOwner": {GET, "/rest/api/2/universal_avatar/view/type/{type}"},
+var configAvatar = map[string][3]string{
+	"Get":          {GET, "/rest/api/2/applicationrole/{key}", ""},
+	"Avatars":      {GET, "/rest/api/2/universal_avatar/type/{type}/owner/{entityId}", ""},
+	"Load":         {POST, "/rest/api/2/universal_avatar/type/{type}/owner/{entityId}", "json"},
+	"Del":          {DEL, "/rest/api/2/universal_avatar/type/{type}/owner/{owningObjectId}/avatar/{id}", ""},
+	"Image":        {GET, "/rest/api/2/universal_avatar/view/type/{type}", ""},
+	"ImageByID":    {GET, "/rest/api/2/universal_avatar/view/type/{type}/avatar/{id}", ""},
+	"ImageByOwner": {GET, "/rest/api/2/universal_avatar/view/type/{type}", ""},
 }
 
 type AvatarService struct {

@@ -61,7 +61,7 @@ func (SD *SD) UserService() *UserService {
 		ctx: context.Background(), sd: SD}
 	IS.Operation = map[string]ContextReq{
 		"User":       SD.CReq(GET, USER),
-		"Users":      SD.CReq(GET, USERS),
+		"Users":      SD.CReq(GET, USER),
 		"Create":     SD.CReq(POST, USER),
 		"Del":        SD.CReq(DEL, USER),
 		"Bulk":       SD.CReq(GET, USER_BULK),
@@ -72,18 +72,18 @@ func (SD *SD) UserService() *UserService {
 		"Email":      SD.CReq(GET, USER_EMAIL),
 		"EmailBulk":  SD.CReq(GET, USER_EMAIL_BULK),
 		"Groups":     SD.CReq(GET, USER_GROUPS),
-		"Search":     SD.CReq(POST, USER_SEARCH),
+		"Search":     SD.CReq(GET, USER_SEARCH),
 	}
 	return &UserService{IS}
 }
 
 func (US *UserService) SearchCtx(ctx context.Context, values url.Values, result interface{}) error {
-	fn, ok := US.Operation["Issue"]
+	fn, ok := US.Operation["Search"]
 	if !ok {
-		return fmt.Errorf("no operation")
+		return fmt.Errorf("no operation Search")
 	}
 
-	res, err := fn(ctx, Values{"qyery": values.Encode()}, nil)
+	res, err := fn(ctx, Values{"query": values.Encode()}, nil)
 	return US.sd.JsonDecode(res, err, result)
 
 }
