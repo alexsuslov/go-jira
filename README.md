@@ -13,11 +13,15 @@ import (
 
 SD:=jira.SD{}
 
+SD.Debug(true)
+
 IssueService:=SD.IssueService()
 
 issue:=gojira.Issue{}
 if err := IssueService.Issue("issueKey", &issue); err!=nil{
     panic(err)
 }
+
+SD.Debug(false)
 
 ```
