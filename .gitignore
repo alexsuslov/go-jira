@@ -100,3 +100,4 @@ yarn-error.log*
 *.wav
 *.mp3
 *.wma
+data
