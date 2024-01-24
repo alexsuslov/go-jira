@@ -34,6 +34,8 @@ type AttachmentService struct {
 const ATTACHMENT_POST = "/rest/api/2/issue/{issueIdOrKey}/attachments"
 const ATTACHMENT = "/secure/attachment/{id}/"
 
+//const ATTACHMENT = "/rest/api/2/attachment/content/{id}/"
+
 var configAttachment = map[string][2]string{
 	//"AttachmentPost": {POST, "/rest/api/2/issue/{issueIdOrKey}/attachments", ""},
 	"Get": {GET, "/rest/api/2/attachment/content/{id}"},
@@ -84,7 +86,7 @@ func (AS *AttachmentService) AttachmentPost(issueIdOrKey string,
 func (AS *AttachmentService) DownloadAttachmentCtx(ctx context.Context, attachmentID string) (io.ReadCloser, error) {
 
 	u, err := AS.sd.Parse(
-		Replace(ATTACHMENT, Values{"attachmentID": attachmentID}))
+		Replace(ATTACHMENT, Values{"id": attachmentID}))
 	if err != nil {
 		return nil, err
 	}

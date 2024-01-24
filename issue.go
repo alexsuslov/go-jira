@@ -103,9 +103,9 @@ func (I *IssueService) CommentsCtx(ctx context.Context, issueIdOrKey string,
 }
 
 // Comments Returns all comments for an issue.
-func (I *IssueService) Comments(ctx context.Context, issueIdOrKey string,
+func (I *IssueService) Comments(issueIdOrKey string,
 	result interface{}) error {
-	return I.CommentsCtx(ctx, issueIdOrKey, result)
+	return I.CommentsCtx(I.ctx, issueIdOrKey, result)
 }
 
 // CommentAddCtx adds a new comment to issueID.
