@@ -35,7 +35,7 @@ import (
 
 */
 
-const ISSUES = "/rest/api/2/issue"
+// const ISSUES = "/rest/api/2/issue"
 const ISSUE = "/rest/api/2/issue/{issueIdOrKey}"
 const ISSUE_ARCHIVE = "/rest/api/2/issue/archive"
 const ISSUE_BULK = "/rest/api/2/issue/bulk"
