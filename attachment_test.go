@@ -31,7 +31,7 @@ import (
 
 func TestAttachmentService_AttachmentPostCtx(t *testing.T) {
 	sd := SD{}
-	sd.Debug(true)
+	sd.SetDebug(true)
 	AS := sd.AttachmentService()
 
 	f, err := os.Open("data/1.png")
