@@ -23,6 +23,7 @@ package v2
 import (
 	"context"
 	"fmt"
+	"io"
 
 	gojira "github.com/andygrunwald/go-jira"
 )
@@ -51,6 +52,8 @@ const ISSUE_NOTIFY = "/rest/api/2/issue/{issueIdOrKey}/notify"
 const ISSUE_TRANSITIONS = "/rest/api/2/issue/{issueIdOrKey}/transitions"
 const ISSUES_ARCHIVE_EXPORT = "/rest/api/2/issues/archive/export"
 
+const ISSUE_TYPES = "/rest/api/2/issuetype"
+
 var configIssue = map[string][2]string{
 	"Issue":            {GET, ISSUE},
 	"Create":           {POST, "/rest/api/2/issue"},
@@ -71,9 +74,13 @@ var configIssue = map[string][2]string{
 	"Transitions":      {GET, ISSUE_TRANSITIONS},
 	"DoTransitions":    {POST, ISSUE_TRANSITIONS},
 	"Export":           {PUT, ISSUES_ARCHIVE_EXPORT},
+	"Types":            {GET, ISSUE_TYPES},
 
-	"CommentsByID": {GET, "/rest/api/2/issue/{issueIdOrKey}/comment"},
-	"CommentAdd":   {POST, "/rest/api/2/issue/{issueIdOrKey}/comment"},
+	"CommentsByID":   {GET, "/rest/api/2/issue/{issueIdOrKey}/comment"},
+	"CommentAdd":     {POST, "/rest/api/2/issue/{issueIdOrKey}/comment"},
+	"FieldOptions":   {GET, "/rest/api/2/field/{fieldId}/option"},
+	"Fields":         {GET, "/rest/api/2/field"},
+	"FieldsContexts": {GET, "/rest/api/2/field/{fieldId}/contexts"},
 }
 
 type IssueService struct {
@@ -89,6 +96,38 @@ func (SD *SD) IssueService() *IssueService {
 	return &IssueService{IS}
 }
 
+func (I *IssueService) GetFieldsContextsRD(ctx context.Context, fieldId string) (io.ReadCloser, error) {
+	fn, ok := I.Operation["FieldsContexts"]
+	if !ok {
+		return nil, fmt.Errorf("no operation")
+	}
+	return fn(ctx, Values{"fieldId": fieldId}, nil)
+}
+
+func (I *IssueService) GetFieldsRD(ctx context.Context) (io.ReadCloser, error) {
+	fn, ok := I.Operation["Fields"]
+	if !ok {
+		return nil, fmt.Errorf("no operation")
+	}
+	return fn(ctx, nil, nil)
+}
+
+func (I *IssueService) GetFieldOptionsRD(ctx context.Context, fieldIdOrKey string) (io.ReadCloser, error) {
+	fn, ok := I.Operation["FieldOptions"]
+	if !ok {
+		return nil, fmt.Errorf("no operation")
+	}
+	return fn(ctx, Values{"fieldIdOrKey": fieldIdOrKey}, nil)
+}
+
+func (I *IssueService) GetIssueTypesRD(ctx context.Context) (io.ReadCloser, error) {
+	fn, ok := I.Operation["Types"]
+	if !ok {
+		return nil, fmt.Errorf("no operation")
+	}
+	return fn(ctx, nil, nil)
+}
+
 // СommentsCtx Returns all comments for an issue.
 //
 // https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-comments/#api-rest-api-2-issue-issueidorkey-comment-get
@@ -99,6 +138,9 @@ func (I *IssueService) CommentsCtx(ctx context.Context, issueIdOrKey string,
 		return fmt.Errorf("no operation")
 	}
 	res, err := fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, nil)
+	if err != nil {
+		return err
+	}
 	return I.sd.JsonDecode(res, err, result)
 }
 
@@ -134,7 +176,9 @@ func (I *IssueService) CreateCtx(ctx context.Context, NewIssue *gojira.Issue, re
 		return fmt.Errorf("no operation Create")
 	}
 	res, err := fn(ctx, nil, NewIssue)
-
+	if err != nil {
+		return err
+	}
 	return I.sd.JsonDecode(res, err, result)
 }
 
@@ -148,11 +192,22 @@ func (I *IssueService) IssueCtx(ctx context.Context, issueIdOrKey string, result
 		return fmt.Errorf("no operation")
 	}
 	res, err := fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, nil)
+	if err != nil {
+		return err
+	}
 	return I.sd.JsonDecode(res, err, result)
 }
 
 func (I *IssueService) Issue(issueIdOrKey string, result interface{}) error {
 	return I.IssueCtx(I.ctx, issueIdOrKey, result)
+}
+
+func (I *IssueService) TransitionsRD(ctx context.Context, issueIdOrKey string, result interface{}) (io.ReadCloser, error) {
+	fn, ok := I.Operation["Transitions"]
+	if !ok {
+		return nil, fmt.Errorf("no operation")
+	}
+	return fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, nil)
 }
 
 func (I *IssueService) TransitionsCtx(ctx context.Context, issueIdOrKey string, result interface{}) error {
@@ -161,6 +216,9 @@ func (I *IssueService) TransitionsCtx(ctx context.Context, issueIdOrKey string, 
 		return fmt.Errorf("no operation")
 	}
 	res, err := fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, nil)
+	if err != nil {
+		return err
+	}
 	return I.sd.JsonDecode(res, err, result)
 }
 
@@ -178,6 +236,9 @@ func (I *IssueService) DoTransitionCtx(ctx context.Context, issueIdOrKey, transi
 			ID: transitionID}}
 
 	res, err := fn(ctx, Values{"issueIdOrKey": issueIdOrKey}, payload)
+	if err != nil {
+		return err
+	}
 	return I.sd.JsonDecode(res, err, result)
 }
 

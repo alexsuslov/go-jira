@@ -42,8 +42,20 @@ func CloseErrLog(closer io.Closer) {
 func (SD *SD) ContextRequest(ctx context.Context,
 	Method string, URL *url.URL, body io.Reader) (r io.ReadCloser, err error) {
 
-	client := req.C()
+	if SD.IsDebug() {
+		data, err := io.ReadAll(body)
+		if err != nil {
+			return nil, err
+		}
+		logrus.
+			WithField("Method", Method).
+			WithField("URL", URL.String()).
+			Debug(string(data))
+		buf := bytes.NewBuffer(data)
+		body = io.NopCloser(buf)
+	}
 
+	client := req.C()
 	Request := client.R().
 		SetBasicAuth(SD.JiraUser(), SD.JiraPass())
 	if body != nil {
@@ -116,11 +128,12 @@ func (SD *SD) CReq(Method, Path string) ContextReq {
 	return func(ctx context.Context, values Values,
 		req interface{}) (io.ReadCloser, error) {
 
+		p := Path
 		if values != nil {
-			Path = Replace(Path, values)
+			p = Replace(p, values)
 		}
 
-		u, err := SD.Parse(Path)
+		u, err := SD.Parse(p)
 		if err != nil {
 			return nil, err
 		}

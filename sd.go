@@ -64,8 +64,12 @@ func (SD *SD) Parse(s string) (*url.URL, error) {
 	return url.Parse(SD.JiraHost() + s)
 }
 
-func (SD *SD) Debug(v bool) {
+func (SD *SD) SetDebug(v bool) {
 	SD.debug = v
+}
+
+func (SD *SD) IsDebug() bool {
+	return SD.debug
 }
 
 func (SD *SD) JiraHost() string {

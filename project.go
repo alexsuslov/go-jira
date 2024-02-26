@@ -46,17 +46,22 @@ func (SD *SD) ProjectService() *ProjectService {
 }
 
 func (I *ProjectService) StatusesCtxRD(ctx context.Context, projectIdOrKey string) (io.ReadCloser, error) {
+
 	fn, ok := I.Operation["Status"]
 	if !ok {
 		return nil, fmt.Errorf("no operation")
 	}
-	return fn(ctx, Values{"projectIdOrKey": projectIdOrKey}, nil)
+	v := Values{"projectIdOrKey": projectIdOrKey}
+	return fn(ctx, v, nil)
 }
 
 func (I *ProjectService) StatusesCtx(ctx context.Context, projectIdOrKey string,
 	result interface{}) error {
 
 	res, err := I.StatusesCtxRD(ctx, projectIdOrKey)
+	if err != nil {
+		return err
+	}
 	return I.sd.JsonDecode(res, err, result)
 }
 

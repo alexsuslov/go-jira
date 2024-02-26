@@ -23,6 +23,7 @@ package v2
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/url"
 )
 
@@ -77,6 +78,14 @@ func (SD *SD) UserService() *UserService {
 	return &UserService{IS}
 }
 
+func (US *UserService) SearchRD(ctx context.Context, values url.Values, result interface{}) (io.Reader, error) {
+	fn, ok := US.Operation["Search"]
+	if !ok {
+		return nil, fmt.Errorf("no operation Search")
+	}
+	return fn(ctx, Values{"query": values.Encode()}, nil)
+}
+
 func (US *UserService) SearchCtx(ctx context.Context, values url.Values, result interface{}) error {
 	fn, ok := US.Operation["Search"]
 	if !ok {
@@ -84,6 +93,9 @@ func (US *UserService) SearchCtx(ctx context.Context, values url.Values, result 
 	}
 
 	res, err := fn(ctx, Values{"query": values.Encode()}, nil)
+	if err != nil {
+		return err
+	}
 	return US.sd.JsonDecode(res, err, result)
 
 }
